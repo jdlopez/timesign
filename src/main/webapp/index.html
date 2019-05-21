@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <title>Time sign demostrative app</title>
+
+    <!-- Bootstrap core CSS -->
+	<link href="bootstrap.min.css" rel="stylesheet" >
+
+
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+    </style>
+    <!-- Custom styles for this template -->
+    <link href="cover.css" rel="stylesheet">
+  </head>
+  <body class="text-center">
+    <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+  <header class="masthead mb-auto">
+    <div class="inner">
+      <h3 class="masthead-brand">Sign In</h3>
+      <nav class="nav nav-masthead justify-content-center">
+        <a class="nav-link active" href="#">Home</a>
+        <a class="nav-link" href="list.html">List</a>
+      </nav>
+    </div>
+  </header>
+
+  <main role="main" class="inner cover">
+    <h1 class="cover-heading">Sign in at work</h1>
+    <p class="lead">Recording of work time (enter and leaving)</p>
+    <p class="lead">
+      In <a href="#" id="inbtn" class="btn btn-lg btn-primary" aria-disabled="true">In</a>
+    </p>
+    <p class="lead">
+      Out <a href="#" id="outbtn" class="btn btn-lg btn-secondary" aria-disabled="true">Out</a>
+    </p>
+  </main>
+
+  <footer class="mastfoot mt-auto">
+    <div class="inner">
+      <p>Sign in work time application.</p>
+    </div>
+  </footer>
+</div>
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script>
+
+      function activate(signtype, lastDate) {
+          var buttonOn;
+          var buttonOff;
+          if (signtype == "in") {
+              buttonOn = $('#outbtn');
+              buttonOff = $('#inbtn');
+          } else {
+              buttonOff = $('#outbtn');
+              buttonOn = $('#inbtn');
+          }
+          buttonOn.prop( "disabled", false );
+          buttonOn.show();
+          buttonOn.text("Last " + signtype + " " + lastDate)
+          buttonOff.prop( "disabled", true );
+          buttonOff.hide();
+      }
+
+      function configureButtons() {
+          $.get( "last", function( resp ) {
+              console.log( resp ); // server response
+              activate(resp.type, resp.signTime || "none");
+          }, "json");
+      }
+
+      function sendSignIn(signtype, position) {
+          var postData = {
+              type: signtype,
+              geo: {}
+          }
+          postData.geo.accuracy = position.coords.accuracy || null;
+          postData.geo.altitude = position.coords.altitude || null;
+          postData.geo.altitudeAccuracy = position.coords.altitudeAccuracy || null;
+          postData.geo.heading = position.coords.heading || null;
+          postData.geo.latitude = position.coords.latitude || null;
+          postData.geo.longitude = position.coords.longitude || null;
+          postData.geo.speed = position.coords.speed || null;
+          postData.geo.timestamp = position.timestamp || null;
+          $.ajax({
+              url: 'sign',
+              type: 'post',
+              dataType: 'json',
+              contentType: 'application/json',
+              success: function (data) {
+                  console.log(data);
+                  configureButtons();
+              },
+              data: JSON.stringify(postData)
+          });
+      }
+
+      $( document ).ready(function() {
+          $('#outbtn').prop('disabled', true);
+          $('#inbtn').prop('disabled', true);
+          configureButtons();
+      });
+
+      $('#outbtn').on("click", function (event) {
+          event.preventDefault();
+          $('#outbtn').prop('disabled', true);
+          if (navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition(function (position) {
+                  console.log(position);
+                  sendSignIn("out", position);
+              });
+          } else {
+              sendSignIn("out", null);
+          } // endif
+      });
+
+      $('#inbtn').on("click", function (event) {
+          event.preventDefault();
+          $('#inbtn').prop('disabled', true);
+          if (navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition(function (position) {
+                  console.log(position);
+                  sendSignIn("in", position);
+              });
+          } else {
+              sendSignIn("in", null);
+          } // endif
+      });
+
+  </script>
+</body>
+</html>
